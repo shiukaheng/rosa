@@ -1,11 +1,11 @@
-// rosm - ROS2 macros
+// rosa - ROS2 macros
 import { Command } from "https://deno.land/x/cmd@v1.2.0/commander/index.ts";
 import { find_package_from_cd, find_workspace, find_workspace_from_cd } from "./macros.ts"
 import { InteractiveShell } from "./shell.ts";
 
 // Create CLI with two sub-commands
-// > rosm build -- builds the current ROS package
-// > rosm watch -- watches the current ROS package for changes and rebuilds
+// > rosa build -- builds the current ROS package
+// > rosa watch -- watches the current ROS package for changes and rebuilds
 // Both support for a --symlink-install option
 
 const config = {
@@ -20,7 +20,7 @@ const program = new Command();
 
 async function main() {
     program
-    .name("rosm")
+    .name("rosa")
     .version("0.0.1")
     .description("ROS2 macros");
 

@@ -1,6 +1,6 @@
 // import * as path from 'https://deno.land/std@0.102.0/path/mod.ts';
 import { resolve, join } from "https://deno.land/std/path/mod.ts";
-import { Config } from "./rosm.ts";
+import { Config } from "./rosa.ts";
 import { parse } from "https://deno.land/x/xml/mod.ts";
 
 class InvalidPathError extends Error {
