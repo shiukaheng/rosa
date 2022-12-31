@@ -1,4 +1,5 @@
-// import * as path from 'https://deno.land/std@0.102.0/path/mod.ts';
+// High level functions meant to be called by the CLI
+
 import { resolve, join } from "https://deno.land/std/path/mod.ts";
 import { Config } from "./rosa.ts";
 import { parse } from "https://deno.land/x/xml/mod.ts";
@@ -176,4 +177,15 @@ export async function find_package_from_cd(config: Config): Promise<object | nul
     // Find the package
     const package_info = await find_package(current_dir, config.packageSearchDepth);
     return package_info;
+}
+
+export async function build_packages(cwd: string) {
+    // To be extended with a package list
+    // For now, just build all packages in the workspace
+    const process = Deno.run({
+        cmd: ["colcon", "build"],
+        cwd: cwd
+    });
+    const status = await process.status();
+    return status;
 }

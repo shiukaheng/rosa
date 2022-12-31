@@ -1,9 +1,11 @@
+// Tools for creating interactive subshells
+
 import { copy } from "https://deno.land/std@0.170.0/streams/copy.ts";
 
 export type InteractiveShellArgs = {
     dir?: string;
     initCommands?: string[];
-    ps1: string;
+    ps1?: string;
 }
 
 /**

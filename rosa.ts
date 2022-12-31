@@ -1,6 +1,6 @@
 // rosa - ROS2 macros
 import { Command } from "https://deno.land/x/cmd@v1.2.0/commander/index.ts";
-import { find_package_from_cd, find_workspace, find_workspace_from_cd } from "./macros.ts"
+import { build_packages, find_package_from_cd, find_workspace, find_workspace_from_cd } from "./macros.ts"
 import { InteractiveShell } from "./shell.ts";
 
 // Create CLI with two sub-commands
@@ -22,7 +22,7 @@ async function main() {
     program
     .name("rosa")
     .version("0.0.1")
-    .description("ROS2 macros");
+    .description("🤖 ROS2 Automation");
 
     program
         .command("cws")
@@ -49,19 +49,25 @@ async function main() {
         })
 
 
-    // program
-    //     .command("build")
-    //     .description("Builds the current ROS package")
-    //     // .option("-s, --symlink-install", "Symlink install the package")
-    //     .action(async () => {
-    //         // Find the workspace
-    //         const ws_dir = await find_workspace(Deno.cwd(), config.workspaceSearchDepth);
-    //         if (!ws_dir) {
-    //             console.log("❌ No workspace found (searched up to ${config.workspaceSearchDepth} levels)");
-    //             Deno.exit(1);
-    //         }
-    //         // Source
-    //     })
+    program
+        .command("build")
+        .description("Runs colcon build on the current ROS workspace")
+        // .option("-s, --symlink-install", "Symlink install the package")
+        .action(async () => {
+            // Find the workspace
+            const ws_dir = await find_workspace(Deno.cwd(), config.workspaceSearchDepth);
+            if (!ws_dir) {
+                console.log("❌ No workspace found (searched up to ${config.workspaceSearchDepth} levels)");
+                Deno.exit(1);
+            }
+            const result = await build_packages(ws_dir);
+            if (result.success) {
+                console.log("✅ Build successful");
+            } else {
+                console.log("❌ Build failed");
+                Deno.exit(1);
+            }
+        })
 
     // program
     //     .command("watch")
