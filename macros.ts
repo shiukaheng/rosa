@@ -2,7 +2,8 @@
 
 import { resolve, join } from "https://deno.land/std/path/mod.ts";
 import { Config } from "./rosa.ts";
-import { parse } from "https://deno.land/x/xml/mod.ts";
+import * as parser from "npm:@rgrove/parse-xml"
+import { Package } from "./package.ts";
 
 class InvalidPathError extends Error {
     constructor(message: string) {
@@ -110,7 +111,7 @@ export async function find_workspace_from_cd(config: Config): Promise<string|nul
  * - The directory contains a "package.xml" file
  * @param proposed_path The path to check
  */
-export async function assert_package(proposed_path: string): Promise<object> {
+export async function assert_package(proposed_path: string): Promise<Package> {
     // Fix the path
     proposed_path = resolve(proposed_path);
     var info
@@ -135,9 +136,8 @@ export async function assert_package(proposed_path: string): Promise<object> {
         }
     }
     // Parse the package.xml file
-    const package_xml = await Deno.readTextFile(join(proposed_path, "package.xml"));
-    console.log(package_xml);
-    return {"string": package_xml};
+    const package_xml = parser.parseXml(await Deno.readTextFile(join(proposed_path, "package.xml")));
+    return new Package(package_xml, proposed_path);
 }
 
 /**
@@ -148,7 +148,7 @@ export async function assert_package(proposed_path: string): Promise<object> {
  * @throws InvalidPathError if the path does not exist
  * @throws NotPackageError if the path is not a package
 */
-export async function find_package(cd: string, depth: number): Promise<object | null> {
+export async function find_package(cd: string, depth: number): Promise<Package | null> {
     let current_depth = 0;
     let current_dir = cd;
     while (current_depth < depth) {
@@ -171,7 +171,7 @@ export async function find_package(cd: string, depth: number): Promise<object | 
     return null;
 }
 
-export async function find_package_from_cd(config: Config): Promise<object | null> {
+export async function find_package_from_cd(config: Config): Promise<Package | null> {
     // Get the current directory
     const current_dir = Deno.cwd();
     // Find the package
@@ -179,11 +179,11 @@ export async function find_package_from_cd(config: Config): Promise<object | nul
     return package_info;
 }
 
-export async function build_packages(cwd: string) {
+export async function build_packages(cwd: string, args: string[]=[]) {
     // To be extended with a package list
     // For now, just build all packages in the workspace
     const process = Deno.run({
-        cmd: ["colcon", "build"],
+        cmd: ["colcon", "build", ...args],
         cwd: cwd
     });
     const status = await process.status();

@@ -9,8 +9,8 @@ export type InteractiveShellArgs = {
 }
 
 /**
- * @class Shell
- * @description A class for interacting with shell subprocesses
+ * @class InteractiveShell
+ * @description A class for users to interact with shell subprocesses
  */
 export class InteractiveShell {
     constructor(args: InteractiveShellArgs = {}) {
@@ -69,4 +69,12 @@ export class InteractiveShell {
     get status(): Promise<Deno.ProcessStatus> {
         return this.process.status();
     }
+}
+
+/**
+ * Preprocesses a path for use in a bash script
+ * @param path the path to preprocess
+ */
+export function bashPreprocessPath(path: string): string {
+    return path.replace(/ /g, "\\ ");
 }
