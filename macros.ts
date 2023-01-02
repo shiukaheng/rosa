@@ -1,9 +1,11 @@
 // High level functions meant to be called by the CLI
 
 import { resolve, join } from "https://deno.land/std/path/mod.ts";
-import { Config } from "./rosa.ts";
+import { Config, getCurrentWorkspace } from "./rosa.ts";
 import * as parser from "npm:@rgrove/parse-xml"
 import { Package } from "./package.ts";
+import { Watcher } from "./watcher.ts";
+import { brightRed, brightGreen, yellow, brightYellow, gray, brightMagenta } from "https://deno.land/std@0.167.0/fmt/colors.ts";
 
 class InvalidPathError extends Error {
     constructor(message: string) {
@@ -188,4 +190,32 @@ export async function build_packages(cwd: string, args: string[]=[]) {
     });
     const status = await process.status();
     return status;
+}
+
+export async function build_package(cwd: string, package_name: string, args: string[]=[]) {
+    // To be extended with a package list
+    // For now, just build all packages in the workspace
+    const process = Deno.run({
+        cmd: ["colcon", "build", "--packages-select", package_name, ...args],
+        cwd: cwd
+    });
+    const status = await process.status();
+    return status;
+}
+
+export async function createWatcherBuilder(): Promise<Watcher> {
+    // Start watcher
+    const ws_dir = await getCurrentWorkspace();
+    const watcher = new Watcher(ws_dir);
+    watcher.addEventListener("package_modified_debounced", (e)=>{
+        console.log(`Package modified: ${e.detail.toStringColor()}, rebuilding...`);
+        build_package(ws_dir, e.detail.name).then((status)=>{
+            if (status.success) {
+                console.log(`✅ Build successful for ${e.detail.toStringColor()}`);
+            } else {
+                console.log(`❌ Build failed for ${e.detail.toStringColor()}`);
+            }
+        });
+    })
+    return watcher;
 }

@@ -11,6 +11,7 @@ export class Package {
     constructor(xml: parser.XmlDocument, rootPath: string) {
         this.rootPath = rootPath;
         try {
+            // @ts-ignore Bypass type checking for XML parsing
             const package_node = xml.children.find((node) => node.name === "package");
             if (package_node === undefined) {
                 throw new Error("Package node not found");

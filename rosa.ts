@@ -1,6 +1,6 @@
 // rosa - ROS2 macros
 import { Command } from "https://deno.land/x/cmd@v1.2.0/commander/index.ts";
-import { build_packages, find_package_from_cd, find_workspace, find_workspace_from_cd } from "./macros.ts"
+import { build_packages, createWatcherBuilder, find_package_from_cd, find_workspace, find_workspace_from_cd } from "./macros.ts"
 import { bashPreprocessPath, InteractiveShell } from "./shell.ts";
 import {bold, brightWhite, brightMagenta, brightCyan} from "https://deno.land/std@0.167.0/fmt/colors.ts";
 import { Watcher } from "./watcher.ts";
@@ -66,7 +66,7 @@ async function main() {
     //     })
 
     program
-        .command("workspace_shell")
+        .command("workspace-shell")
         .alias("wsh")
         .description("Opens a shell with ROS and workspace sourced (for interacting with packages)")
         .action(async () => {
@@ -98,7 +98,8 @@ async function main() {
         })
 
     program
-        .command("build_all")
+        .command("build-all")
+        .alias("ba")
         .description("Builds all packages in the workspace")
         .action(async (...args: string[]) => {
             console.log(args);
@@ -107,11 +108,11 @@ async function main() {
         })
 
     program
-        .command("watch_all")
+        .command("watch-all")
+        .alias("wa")
         .description("Watches all packages in the workspace")
-        .action(async (...args: string[]) => {
-            const ws_dir = await getCurrentWorkspace();
-            const watcher = new Watcher(ws_dir);
+        .action(() => {
+            const watcher = createWatcherBuilder();
         })
         
 
