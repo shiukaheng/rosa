@@ -1,7 +1,7 @@
 // Functions for finding ROS2 workspaces and packages
 
 import { resolve, join } from "https://deno.land/std/path/mod.ts";
-import * as parser from "npm:@rgrove/parse-xml";
+import * as parser from "npm:@rgrove/parse-xml"; // Need to use alternative way to import this
 import { Package } from "./package.ts";
 import { brightRed } from "https://deno.land/std@0.167.0/fmt/colors.ts";
 import { InvalidPathError, NotPackageError, NotWorkspaceError } from "./errors.ts";

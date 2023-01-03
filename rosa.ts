@@ -4,7 +4,7 @@ import { Command } from "https://deno.land/x/cliffy@v0.25.6/command/mod.ts";
 import { build_package, build_packages, createPackageWatcherBuilder, createWatcherBuilder } from "./macros.ts"
 import { find_package_from_cd, find_workspace_from_cd, getConfigPath } from "./path_finding.ts";
 import { bashPreprocessPath, InteractiveShell } from "./shell.ts";
-import {bold, brightWhite, brightMagenta, brightCyan} from "https://deno.land/std@0.167.0/fmt/colors.ts";
+import {bold, brightWhite, brightMagenta, brightCyan, brightRed} from "https://deno.land/std@0.167.0/fmt/colors.ts";
 import RosaConfig, { defaultConfig, getConfig } from "./config.ts";
 
 // Get workspace and package directories
@@ -25,6 +25,9 @@ async function main() {
         .arguments("[command:string]")
         .action(() => {
             program.showHelp();
+        })
+        .help({
+            colors: false
         })
 
     // From this point on, require a workspace to be present
@@ -85,8 +88,8 @@ async function main() {
     // From this point on, require a package to be present
         
     program
-        .command("build-current")
-        .alias("bc")
+        .command("build")
+        .alias("b")
         .description("Builds the current package")
         .action(async () => {
             const ws_dir = await requireWorkspace();
@@ -96,8 +99,8 @@ async function main() {
         })
 
     program
-        .command("watch-current")
-        .alias("wc")
+        .command("watch")
+        .alias("w")
         .description("Watches the current package")
         .action(async () => {
             const _ws_dir = await requireWorkspace();
@@ -122,7 +125,7 @@ await main();
 // Convenience functions
 export function requirePackage() {
     if (!pkg_info) {
-        console.log(`❌ No package found`);
+        console.log(brightRed(`❌ No package found, please run this command from within a package directory`));
         Deno.exit(1);
     }
     return pkg_info;
@@ -130,7 +133,7 @@ export function requirePackage() {
 
 export function requireWorkspace() {
     if (!ws_dir) {
-        console.log(`❌ No workspace found`);
+        console.log(brightRed(`❌ Not currently in a workspace, please run this command from within a workspace directory`));
         Deno.exit(1);
     }
     return ws_dir;
