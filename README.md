@@ -3,7 +3,9 @@
 ## 📦 Installation
 - Make sure you have `deno` installed on your system
 ```bash
-> deno install -A https://...
+> deno install --allow-sys --allow-env --allow-run --allow-read --allow-write --unstable -f https://deno.land/x/rosa/rosa.ts
+# You may need to add the binary directory to your PATH variable to make it runnable everywhere, or add it to your .bashrc file
+> export PATH="/home/$USER/.deno/bin:$PATH"
 ```
 ## 👨‍💻 Sample usage
 > NOTE: Make sure your current working directory is inside of a ROS2 workspace (could be any sub-directory of the workspace). During first use of any `rosa` commands in a new workspace, it prompts for user configuration (mainly choosing which ROS2 installation to use).
