@@ -1,15 +1,15 @@
 // rosa - ROS2 macros
-import { Command } from "https://deno.land/x/cmd@v1.2.0/commander/index.ts";
-import { build_package, build_packages, createWatcherBuilder, find_package_from_cd, find_workspace, find_workspace_from_cd } from "./macros.ts"
+// import { Command } from "https://deno.land/x/cmd@v1.2.0/commander/index.ts";
+import { Command, EnumType } from "https://deno.land/x/cliffy@v0.25.6/command/mod.ts";
+import { build_package, build_packages, createWatcherBuilder, find_package_from_cd, find_workspace, find_workspace_from_cd, getConfigPath } from "./macros.ts"
 import { bashPreprocessPath, InteractiveShell } from "./shell.ts";
 import {bold, brightWhite, brightMagenta, brightCyan} from "https://deno.land/std@0.167.0/fmt/colors.ts";
 import { Watcher } from "./watcher.ts";
+import RosaConfig from "./config.ts";
 
-const config = {
-    workspaceSearchDepth: 10,
-    packageSearchDepth: 10,
-    ros2Path: "/opt/ros/humble/",
-}
+const configPath = await getConfigPath();
+const config = new RosaConfig(configPath);
+await config.asyncInit;
 
 // Check if ROS2 path is valid
 try {
@@ -46,25 +46,17 @@ export async function getCurrentWorkspace() {
 }
 
 async function main() {
+
+    // Main, argumentless command, triggers help and allows auto-completion
     program
-    .name("rosa")
-    .version("0.0.1")
-    .description(bold(brightWhite(`🤖 ROS2 automation macros`)))
-
-    // program
-    //     .command("cws")
-    //     .description("Finds the ROS2 workspace given the current directory")
-    //     .action(async () => {
-    //         return await getCurrentWorkspace();
-    //     })
-
-    // program
-    //     .command("cpkg")
-    //     .description("Finds the ROS2 package given the current directory")
-    //     .action(async () => {
-    //         return await getCurrentPackage();
-    //     })
-
+        .name("rosa")
+        .version("0.0.1")
+        .description(bold(brightWhite(`🤖 ROS2 automation macros`)))
+        .arguments("[command:string]")
+        .action(() => {
+            program.showHelp();
+        })
+    
     program
         .command("workspace-shell")
         .alias("wsh")
@@ -101,7 +93,7 @@ async function main() {
         .command("build-all")
         .alias("ba")
         .description("Builds all packages in the workspace")
-        .action(async (...args: string[]) => {
+        .action(async () => {
             const ws_dir = await getCurrentWorkspace();
             await build_packages(ws_dir);
         })
@@ -124,6 +116,7 @@ async function main() {
             console.log(`Building ${pkg_info.toStringColor}...`);
             await build_package(ws_dir, pkg_info.name);
         })
+        
     program.parse(Deno.args);
 }
 

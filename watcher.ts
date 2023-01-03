@@ -36,7 +36,7 @@ export class Watcher extends EventTarget {
     debounceTime: number;
 
     async parse_package_xml(current_dir: any) {
-        const package_xml = await assert_package(current_dir);
+        const package_xml = await assert_package(current_dir);``
         return package_xml;
     }
 
@@ -93,7 +93,7 @@ export class Watcher extends EventTarget {
                 }
                 // If no package is found, emit a "package_removed" event
                 if (p !== null) {
-                    this.onPackageRemoved(p);
+                    this.onPackageRemoved(p.rootPath);
                     continue;
                 }
             }

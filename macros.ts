@@ -1,6 +1,6 @@
 // High level functions meant to be called by the CLI
 
-import { resolve, join } from "https://deno.land/std/path/mod.ts";
+import { resolve, join, dirname } from "https://deno.land/std/path/mod.ts";
 import { Config, getCurrentWorkspace } from "./rosa.ts";
 import * as parser from "npm:@rgrove/parse-xml"
 import { Package } from "./package.ts";
@@ -218,4 +218,21 @@ export async function createWatcherBuilder(): Promise<Watcher> {
         });
     })
     return watcher;
+}
+
+export async function getConfigPath(configName:string="rosa.config"): Promise<string> {
+    // Try to get workspace
+    const cwd = Deno.cwd();
+    const ws_dir = await find_workspace(cwd, Infinity);
+    let config_path: string;
+    if (ws_dir === null) {
+        console.log(brightRed(`Please run this command from within a ROS2 workspace`));
+        Deno.exit(1);
+        // const script_path = await Deno.realPath(Deno.execPath());
+        // config_path = join(dirname(script_path), configName);
+        // console.log(`Not currently in a workspace, using global config at ${config_path}`);
+    } else {
+        config_path = join(ws_dir, configName);
+    }
+    return config_path;
 }
