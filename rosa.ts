@@ -1,69 +1,40 @@
-// rosa - ROS2 macros
-// import { Command } from "https://deno.land/x/cmd@v1.2.0/commander/index.ts";
-import { Command, EnumType } from "https://deno.land/x/cliffy@v0.25.6/command/mod.ts";
-import { build_package, build_packages, createWatcherBuilder, find_package_from_cd, find_workspace, find_workspace_from_cd, getConfigPath } from "./macros.ts"
+// Main entry point for the CLI
+
+import { Command } from "https://deno.land/x/cliffy@v0.25.6/command/mod.ts";
+import { build_package, build_packages, createPackageWatcherBuilder, createWatcherBuilder } from "./macros.ts"
+import { find_package_from_cd, find_workspace_from_cd, getConfigPath } from "./path_finding.ts";
 import { bashPreprocessPath, InteractiveShell } from "./shell.ts";
 import {bold, brightWhite, brightMagenta, brightCyan} from "https://deno.land/std@0.167.0/fmt/colors.ts";
-import { Watcher } from "./watcher.ts";
-import RosaConfig from "./config.ts";
+import RosaConfig, { defaultConfig, getConfig } from "./config.ts";
 
-const configPath = await getConfigPath();
-const config = new RosaConfig(configPath);
-await config.asyncInit;
+// Get workspace and package directories
+const ws_dir = await find_workspace_from_cd();
+const pkg_info = await find_package_from_cd();
 
-// Check if ROS2 path is valid
-try {
-    const info = await Deno.lstat(config.ros2Path);
-    if (!info.isDirectory) {
-        console.log(`❌ The ROS2 path '${config.ros2Path}' is not a directory`);
-        Deno.exit(1);
-    }
-} catch (e) {
-    console.log(`❌ The ROS2 path '${config.ros2Path}' does not exist`);
-    Deno.exit(1);
-}
-
-export type Config = typeof config;
+// CLI
 
 const program = new Command();
 
-export async function getCurrentPackage() {
-    const pkg_info = await find_package_from_cd(config);
-    if (!pkg_info) {
-        console.log(`❌ No package found (searched up to ${config.packageSearchDepth} levels)`);
-        Deno.exit(1);
-    }
-    return pkg_info;
-}
-
-export async function getCurrentWorkspace() {
-    const ws_dir = await find_workspace_from_cd(config);
-    if (!ws_dir) {
-        console.log(`❌ No workspace found (searched up to ${config.workspaceSearchDepth} levels)`);
-        Deno.exit(1);
-    }
-    return ws_dir;
-}
-
 async function main() {
 
-    // Main, argumentless command, triggers help and allows auto-completion
+    // CLI main entry point
     program
         .name("rosa")
         .version("0.0.1")
-        .description(bold(brightWhite(`🤖 ROS2 automation macros`)))
+        .description(bold(brightWhite(`🌹 ROS2 Automation Macros`)))
         .arguments("[command:string]")
         .action(() => {
             program.showHelp();
         })
-    
+
+    // From this point on, require a workspace to be present
     program
         .command("workspace-shell")
         .alias("wsh")
         .description("Opens a shell with ROS and workspace sourced (for interacting with packages)")
         .action(async () => {
-            const ws_dir = await getCurrentWorkspace();
-            // Get last directory of workspace and ros2 path
+            const ws_dir = requireWorkspace();
+            const config = await getConfig();
             const ws_name = ws_dir.split("/").slice(-1)[0];
             const ros2_distro = config.ros2Path.split("/").slice(-2)[0];
             // Create PS1
@@ -81,6 +52,8 @@ async function main() {
         .alias("sh")
         .description("Opens a shell with just ROS sourced (for use with colcon)")
         .action(async () => {
+            const _ws_dir = requireWorkspace();
+            const config = await getConfig();
             const ros2_distro = config.ros2Path.split("/").slice(-2)[0];
             const ps1 = `${brightCyan(ros2_distro)}$ `;
             const shell = new InteractiveShell({ps1, initCommands: [
@@ -94,7 +67,8 @@ async function main() {
         .alias("ba")
         .description("Builds all packages in the workspace")
         .action(async () => {
-            const ws_dir = await getCurrentWorkspace();
+            const ws_dir = await requireWorkspace();
+            const _config = await getConfig();
             await build_packages(ws_dir);
         })
 
@@ -102,22 +76,62 @@ async function main() {
         .command("watch-all")
         .alias("wa")
         .description("Watches all packages in the workspace")
-        .action(() => {
-            const watcher = createWatcherBuilder();
+        .action(async () => {
+            const _ws_dir = await requireWorkspace();
+            const _config = await getConfig();
+            const _watcher = createWatcherBuilder();
         })
+
+    // From this point on, require a package to be present
         
     program
         .command("build-current")
         .alias("bc")
         .description("Builds the current package")
         .action(async () => {
-            const ws_dir = await getCurrentWorkspace();
-            const pkg_info = await getCurrentPackage();
+            const ws_dir = await requireWorkspace();
+            const pkg_info = await requirePackage();
             console.log(`Building ${pkg_info.toStringColor}...`);
             await build_package(ws_dir, pkg_info.name);
         })
+
+    program
+        .command("watch-current")
+        .alias("wc")
+        .description("Watches the current package")
+        .action(async () => {
+            const _ws_dir = await requireWorkspace();
+            const pkg_info = await requirePackage();
+            console.log(`Watching ${pkg_info.toStringColor()}...`);
+            const _watcher = createPackageWatcherBuilder(pkg_info.name);
+        })
+    
+    // program
+    //     .command("config")
+    //     .description("Configures rosa for the current workspace")
+    //     .action(async () => {
+    //         const ws_dir = await requireWorkspace();
+    //         const config = await getConfig();
+    //     })
         
     program.parse(Deno.args);
 }
 
 await main();
+
+// Convenience functions
+export function requirePackage() {
+    if (!pkg_info) {
+        console.log(`❌ No package found`);
+        Deno.exit(1);
+    }
+    return pkg_info;
+}
+
+export function requireWorkspace() {
+    if (!ws_dir) {
+        console.log(`❌ No workspace found`);
+        Deno.exit(1);
+    }
+    return ws_dir;
+}

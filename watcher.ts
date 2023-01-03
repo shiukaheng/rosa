@@ -1,10 +1,11 @@
 // Workspace watcher tools
 
-import { join, relative, isAbsolute } from "https://deno.land/std/path/mod.ts";
-import { brightRed, brightGreen, yellow, brightYellow, gray, brightMagenta } from "https://deno.land/std@0.167.0/fmt/colors.ts";
-import { assert_package, assert_workspace, build_packages, find_package } from "./macros.ts";
+import { join, relative, isAbsolute } from "https://deno.land/std@0.170.0/path/mod.ts";
+import { brightRed, brightGreen, brightYellow, gray } from "https://deno.land/std@0.167.0/fmt/colors.ts";
+import { build_packages } from "./macros.ts";
+import { assert_package, assert_workspace, find_package } from "./path_finding.ts";
 import { Package } from "./package.ts";
-import { getCurrentWorkspace } from "./rosa.ts";
+import { requireWorkspace } from "./rosa.ts";
 import { debounce } from "https://deno.land/std@0.168.0/async/debounce.ts";
 
 // - Monitor packages being added, removed, or modified (timeout specifiable)
@@ -167,7 +168,7 @@ export class Watcher extends EventTarget {
         this.verbose || console.log(brightGreen(`Found ${this.packageMap.size} package(s) in total.`));
 
         // Do first build
-        const ws = await getCurrentWorkspace();
+        const ws = await requireWorkspace();
         let status;
         try {
         status = await build_packages(ws);

@@ -1,24 +1,21 @@
 import { Confirm, prompt, Select } from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
-import { z } from "https://deno.land/x/zod/mod.ts";
-import { join, relative, isAbsolute } from "https://deno.land/std/path/mod.ts";
+import { z } from "https://deno.land/x/zod@v3.20.2/mod.ts";
+import { join } from "https://deno.land/std@0.170.0/path/mod.ts";
+import { getConfigPath } from "./path_finding.ts";
 
 const configSchema = z.object({
-    workspaceSearchDepth: z.number(),
-    packageSearchDepth: z.number(),
-    ros2Path: z.string().nullable()
+    ros2Path: z.string()
 });
 
 export type Config = z.infer<typeof configSchema>;
 
-const defaultConfig = {
-    workspaceSearchDepth: 10,
-    packageSearchDepth: 10,
-    ros2Path: null
+export const defaultConfig = { // Everything should be present, if no default can be provided, it should be null
+    ros2Path: null as string | null,
 }
 
 export default class RosaConfig implements Config {
     configPath: string;
-    private config: Config = defaultConfig;
+    private _config = defaultConfig; // Does not guarantee that config is valid, but the getters will
     private isLoaded = false;
     asyncInit: Promise<void> | null = null;
     
@@ -62,7 +59,7 @@ export default class RosaConfig implements Config {
             console.log(`Running first-time setup...`);
             Deno.exit(1);
         }
-        this.config = result.data as Config;
+        this._config = result.data as Config;
     }
 
     /**
@@ -71,6 +68,7 @@ export default class RosaConfig implements Config {
     async promptConfig() {
         console.log(`Your config file is invalid. Would you like to create a new one? (y/n)`);
         const result = await prompt({
+            // @ts-ignore - cliffy types are wrong?
             type: Confirm,
             name: "confirm",
             message: "Create new config file?",
@@ -97,23 +95,30 @@ export default class RosaConfig implements Config {
             options: ros2Paths,
         });
         // Hidden settings (not prompted)
-        const workspaceSearchDepth = 10;
-        const packageSearchDepth = 10;
+        // NA
         // Create config object
-        this.config = {
+        this._config = {
             ros2Path: ros2Path,
-            workspaceSearchDepth: workspaceSearchDepth,
-            packageSearchDepth: packageSearchDepth,
         };
         // Write config to file
         this.writeConfig();
     }
 
     /**
+     * Reconfgures the config file
+     */
+    async reconfigure() {
+        // Delete config file
+        Deno.removeSync(this.configPath);
+        // Create new config file
+        await this.createConfig();
+    }
+
+    /**
      * Writes the config object to the config file
      */
     writeConfig() {
-        Deno.writeTextFileSync(this.configPath, JSON.stringify(this.config, null, 4));
+        Deno.writeTextFileSync(this.configPath, JSON.stringify(this._config, null, 4));
     }
 
     /**
@@ -136,18 +141,35 @@ export default class RosaConfig implements Config {
         return ros2Paths;
     }
 
-    get workspaceSearchDepth(): number {
-        return this.config.workspaceSearchDepth;
-    }
-
-    get packageSearchDepth(): number {
-        return this.config.packageSearchDepth;
-    }
-
     get ros2Path(): string {
-        if (this.config.ros2Path === null) {
+        if (this._config.ros2Path === null) {
             throw new Error("ROS2 path is null, make sure to call promptConfig() first");
         }
-        return this.config.ros2Path;
+        return this._config.ros2Path;
     }
+}
+
+// Get config (stateful)
+export let config: RosaConfig | null = null;
+export async function getConfig(): Promise<Config> {
+    // TODO: Make it take in a workspace path
+    if (!config) {
+        // Load config or prompt creation if required
+        const configPath = await getConfigPath();
+        config = new RosaConfig(configPath);
+        await config.asyncInit;
+
+        // Check if ROS2 path is valid
+        try {
+            const info = await Deno.lstat(config.ros2Path);
+            if (!info.isDirectory) {
+                console.log(`❌ The ROS2 path '${config.ros2Path}' is not a directory`);
+                Deno.exit(1);
+            }
+        } catch (e) {
+            console.log(`❌ The ROS2 path '${config.ros2Path}' does not exist`);
+            Deno.exit(1);
+        }
+    }
+    return config;
 }
