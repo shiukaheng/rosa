@@ -1,97 +1,130 @@
 // rosa - ROS2 macros
 import { Command } from "https://deno.land/x/cmd@v1.2.0/commander/index.ts";
-import { build_packages, find_package_from_cd, find_workspace, find_workspace_from_cd } from "./macros.ts"
-import { InteractiveShell } from "./shell.ts";
-
-// Create CLI with two sub-commands
-// > rosa build -- builds the current ROS package
-// > rosa watch -- watches the current ROS package for changes and rebuilds
-// Both support for a --symlink-install option
+import { build_package, build_packages, createWatcherBuilder, find_package_from_cd, find_workspace, find_workspace_from_cd } from "./macros.ts"
+import { bashPreprocessPath, InteractiveShell } from "./shell.ts";
+import {bold, brightWhite, brightMagenta, brightCyan} from "https://deno.land/std@0.167.0/fmt/colors.ts";
+import { Watcher } from "./watcher.ts";
 
 const config = {
     workspaceSearchDepth: 10,
     packageSearchDepth: 10,
-    ps1: `\x1b[35m\x1b[1mROS Workspace\x1b[0m$ `,
+    ros2Path: "/opt/ros/humble/",
+}
+
+// Check if ROS2 path is valid
+try {
+    const info = await Deno.lstat(config.ros2Path);
+    if (!info.isDirectory) {
+        console.log(`❌ The ROS2 path '${config.ros2Path}' is not a directory`);
+        Deno.exit(1);
+    }
+} catch (e) {
+    console.log(`❌ The ROS2 path '${config.ros2Path}' does not exist`);
+    Deno.exit(1);
 }
 
 export type Config = typeof config;
 
 const program = new Command();
 
+export async function getCurrentPackage() {
+    const pkg_info = await find_package_from_cd(config);
+    if (!pkg_info) {
+        console.log(`❌ No package found (searched up to ${config.packageSearchDepth} levels)`);
+        Deno.exit(1);
+    }
+    return pkg_info;
+}
+
+export async function getCurrentWorkspace() {
+    const ws_dir = await find_workspace_from_cd(config);
+    if (!ws_dir) {
+        console.log(`❌ No workspace found (searched up to ${config.workspaceSearchDepth} levels)`);
+        Deno.exit(1);
+    }
+    return ws_dir;
+}
+
 async function main() {
     program
     .name("rosa")
     .version("0.0.1")
-    .description("🤖 ROS2 Automation");
-
-    program
-        .command("cws")
-        .description("Finds the ROS2 workspace given the current directory")
-        .action(async () => {
-            const ws_dir = await find_workspace_from_cd(config);
-            if (ws_dir) {
-                console.log(`✅ Found workspace at '${ws_dir}'`);
-            } else {
-                console.log(`❌ No workspace found (searched up to ${config.workspaceSearchDepth} levels)`);
-            }
-        })
-
-    program
-        .command("cpkg")
-        .description("Finds the ROS2 package given the current directory")
-        .action(async () => {
-            const pkg_info = await find_package_from_cd(config);
-            if (pkg_info) {
-                console.log(`✅ Found package ${pkg_info}`);
-            } else {
-                console.log(`❌ No package found (searched up to ${config.packageSearchDepth} levels)`);
-            }
-        })
-
-
-    program
-        .command("build")
-        .description("Runs colcon build on the current ROS workspace")
-        // .option("-s, --symlink-install", "Symlink install the package")
-        .action(async () => {
-            // Find the workspace
-            const ws_dir = await find_workspace(Deno.cwd(), config.workspaceSearchDepth);
-            if (!ws_dir) {
-                console.log("❌ No workspace found (searched up to ${config.workspaceSearchDepth} levels)");
-                Deno.exit(1);
-            }
-            const result = await build_packages(ws_dir);
-            if (result.success) {
-                console.log("✅ Build successful");
-            } else {
-                console.log("❌ Build failed");
-                Deno.exit(1);
-            }
-        })
+    .description(bold(brightWhite(`🤖 ROS2 automation macros`)))
 
     // program
-    //     .command("watch")
-    //     .description("Watches the current ROS package for changes and rebuilds")
-    //     // .option("-s, --symlink-install", "Symlink install the package")
-    //     .action((options) => {
-    //         // Watch the package
-    //         console.log("Watching package for changes...")
+    //     .command("cws")
+    //     .description("Finds the ROS2 workspace given the current directory")
+    //     .action(async () => {
+    //         return await getCurrentWorkspace();
+    //     })
+
+    // program
+    //     .command("cpkg")
+    //     .description("Finds the ROS2 package given the current directory")
+    //     .action(async () => {
+    //         return await getCurrentPackage();
     //     })
 
     program
-        .command("shell")
-        .description("Opens a shell in the current ROS workspace")
+        .command("workspace-shell")
+        .alias("wsh")
+        .description("Opens a shell with ROS and workspace sourced (for interacting with packages)")
         .action(async () => {
-            // Open a shell
-            const ws_dir = await find_workspace_from_cd(config);
-            if (!ws_dir) {
-                console.log(`❌ No workspace found (searched up to ${config.workspaceSearchDepth} levels)`);
-                Deno.exit(1);
-            }
-            const shell = new InteractiveShell({dir: ws_dir, ps1: config.ps1});
+            const ws_dir = await getCurrentWorkspace();
+            // Get last directory of workspace and ros2 path
+            const ws_name = ws_dir.split("/").slice(-1)[0];
+            const ros2_distro = config.ros2Path.split("/").slice(-2)[0];
+            // Create PS1
+            const ps1 = `${brightCyan( ros2_distro)}:${brightMagenta(ws_name)}$ `;   
+            // Launch shell
+            const shell = new InteractiveShell({dir: ws_dir, ps1, initCommands: [
+                `source ${bashPreprocessPath(config.ros2Path)}/setup.bash`,
+                `source ${bashPreprocessPath(ws_dir)}/install/setup.bash`,
+            ]});
+            await shell.status;
         })
 
-    program.parse(Deno.args)
+    program
+        .command("shell")
+        .alias("sh")
+        .description("Opens a shell with just ROS sourced (for use with colcon)")
+        .action(async () => {
+            const ros2_distro = config.ros2Path.split("/").slice(-2)[0];
+            const ps1 = `${brightCyan(ros2_distro)}$ `;
+            const shell = new InteractiveShell({ps1, initCommands: [
+                `source ${bashPreprocessPath(config.ros2Path)}/setup.bash`,
+            ]});
+            await shell.status;
+        })
+
+    program
+        .command("build-all")
+        .alias("ba")
+        .description("Builds all packages in the workspace")
+        .action(async (...args: string[]) => {
+            const ws_dir = await getCurrentWorkspace();
+            await build_packages(ws_dir);
+        })
+
+    program
+        .command("watch-all")
+        .alias("wa")
+        .description("Watches all packages in the workspace")
+        .action(() => {
+            const watcher = createWatcherBuilder();
+        })
+        
+    program
+        .command("build-current")
+        .alias("bc")
+        .description("Builds the current package")
+        .action(async () => {
+            const ws_dir = await getCurrentWorkspace();
+            const pkg_info = await getCurrentPackage();
+            console.log(`Building ${pkg_info.toStringColor}...`);
+            await build_package(ws_dir, pkg_info.name);
+        })
+    program.parse(Deno.args);
 }
 
 await main();
