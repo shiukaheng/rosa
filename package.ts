@@ -4,10 +4,10 @@ import * as parser from "npm:@rgrove/parse-xml"
 export class Package {
     // name: string;
     rootPath: string;
-    rawXml: parser.XmlDocument|undefined;
-    name: string|undefined;
-    version: string|undefined;
-    description: string|undefined;
+    rawXml: parser.XmlDocument;
+    name: string;
+    version: string;
+    description: string;
     constructor(xml: parser.XmlDocument, rootPath: string) {
         this.rootPath = rootPath;
         try {

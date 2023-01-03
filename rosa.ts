@@ -1,6 +1,6 @@
 // rosa - ROS2 macros
 import { Command } from "https://deno.land/x/cmd@v1.2.0/commander/index.ts";
-import { build_packages, createWatcherBuilder, find_package_from_cd, find_workspace, find_workspace_from_cd } from "./macros.ts"
+import { build_package, build_packages, createWatcherBuilder, find_package_from_cd, find_workspace, find_workspace_from_cd } from "./macros.ts"
 import { bashPreprocessPath, InteractiveShell } from "./shell.ts";
 import {bold, brightWhite, brightMagenta, brightCyan} from "https://deno.land/std@0.167.0/fmt/colors.ts";
 import { Watcher } from "./watcher.ts";
@@ -102,7 +102,6 @@ async function main() {
         .alias("ba")
         .description("Builds all packages in the workspace")
         .action(async (...args: string[]) => {
-            console.log(args);
             const ws_dir = await getCurrentWorkspace();
             await build_packages(ws_dir);
         })
@@ -115,7 +114,16 @@ async function main() {
             const watcher = createWatcherBuilder();
         })
         
-
+    program
+        .command("build-current")
+        .alias("bc")
+        .description("Builds the current package")
+        .action(async () => {
+            const ws_dir = await getCurrentWorkspace();
+            const pkg_info = await getCurrentPackage();
+            console.log(`Building ${pkg_info.toStringColor}...`);
+            await build_package(ws_dir, pkg_info.name);
+        })
     program.parse(Deno.args);
 }
 
