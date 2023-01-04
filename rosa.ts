@@ -94,7 +94,7 @@ async function main() {
         .action(async () => {
             const ws_dir = await requireWorkspace();
             const pkg_info = await requirePackage();
-            console.log(`Building ${pkg_info.toStringColor}...`);
+            console.log(`Building ${pkg_info.toStringColor()}...`);
             await build_package(ws_dir, pkg_info.name);
         })
 
