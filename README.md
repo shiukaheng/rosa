@@ -4,8 +4,8 @@
 - Make sure you have `deno` installed on your system
 ```bash
 deno install --allow-sys --allow-env --allow-run --allow-read --allow-write --unstable -f https://deno.land/x/rosa@v0.0.1d/rosa.ts
-# Add deno bin to .bashrc if it doesn't exist
-LINE='export PATH=\"/home/$USER/.deno/bin:$PATH\"'
+# Add deno bin to .bashrc if it doesn't exist (tested on ubuntu)
+LINE='export PATH="/home/$USER/.deno/bin:$PATH"'
 FILE='~/.bashrc '
 grep -qF -- "$LINE" "$FILE" || echo "$LINE" >> "$FILE"
 ```
