@@ -53,6 +53,7 @@ rosa watch-all # Maps all packages within workspace, and if there are any files 
 ## Todo
 ### General
 - [ ] Compatibility with more shell environments (currently only bash is supported)
+
 ### Watcher
 - [ ] Allow per package configuration of build options (e.g., always use --symlink-install)
 - [ ] Make watcher dependency aware and automatically dependent packages
