@@ -1,7 +1,7 @@
 # 🌹 `rosa` — ROS2 Automation Macros
 `rosa` is a thin wrapper on ROS2 tools to streamline common ROS2 development tasks. It automatically sources the correct files, and provides a file watcher to automatiaclly build packages upon file changes.
 ## 📦 Installation
-- Make sure you have `deno` installed on your system
+REQUIREMENT: Make sure you have `deno` installed on your system ([instructions](https://deno.land/manual/getting_started/installation))
 ```bash
 deno install --allow-sys --allow-env --allow-run --allow-read --allow-write --unstable -f https://deno.land/x/rosa@v0.0.1d/rosa.ts
 # Add deno bin to .bashrc if it doesn't exist (tested on ubuntu)
