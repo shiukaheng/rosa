@@ -3,9 +3,9 @@
 ## 📦 Installation
 - Make sure you have `deno` installed on your system
 ```bash
-> deno install --allow-sys --allow-env --allow-run --allow-read --allow-write --unstable -f https://deno.land/x/rosa/rosa.ts
+deno install --allow-sys --allow-env --allow-run --allow-read --allow-write --unstable -f https://deno.land/x/rosa@v0.0.1c/rosa.ts
 # You may need to add the binary directory to your PATH variable to make it runnable everywhere, or add it to your .bashrc file
-> export PATH="/home/$USER/.deno/bin:$PATH"
+echo 'export PATH=\"/home/$USER/.deno/bin:$PATH\"' >> ~/.bashrc 
 ```
 ## 👨‍💻 Sample usage
 > NOTE: Make sure your current working directory is inside of a ROS2 workspace (could be any sub-directory of the workspace). During first use of any `rosa` commands in a new workspace, it prompts for user configuration (mainly choosing which ROS2 installation to use).
@@ -15,15 +15,15 @@
   <summary>Click to show original steps...</summary>
   
   ```bash
-  > source /opt/ros/<distribution>/setup.sh
-  > source ../../install/setup.sh
-  > ros2
+  source /opt/ros/<distribution>/setup.sh
+  source ../../install/setup.sh
+  ros2
   ```
 </details>
 
 ```bash
-> rosa wsh # or alternatively, rosa workspace-shell
-> ros2
+rosa wsh # or alternatively, rosa workspace-shell
+ros2
 ```
 
 ### Building a package
@@ -32,21 +32,21 @@
   
   ```bash
   # Open a new terminal
-  > source /opt/ros/<distribution>/setup.sh
-  > cd ../../ # (cd'ing to workspace root)
-  > colcon build --packages-select <package name>
+  source /opt/ros/<distribution>/setup.sh
+  cd ../../ # (cd'ing to workspace root)
+  colcon build --packages-select <package name>
   ```
 </details>
 
 ```bash
 # Run this from any existing terminal inside the package
-> rosa build # Automatically builds the package folder you are in
+rosa build # Automatically builds the package folder you are in
 ```
 
 ### Watching and automatically building packages in workspace (experimental)
 ```bash
 # Run this as long as you are inside a workspace
-> rosa watch-all # Maps all packages within workspace, and if there are any files changes, the package is rebuilt.
+rosa watch-all # Maps all packages within workspace, and if there are any files changes, the package is rebuilt.
 ```
 ## Todo
 ### General
