@@ -3,7 +3,7 @@
 ## 📦 Installation
 - Make sure you have `deno` installed on your system
 ```bash
-> deno install --allow-sys --allow-env --allow-run --allow-read --allow-write --unstable -f https://deno.land/x/rosa/rosa.ts
+> deno install --allow-sys --allow-env --allow-run --allow-read --allow-write --unstable -f https://deno.land/x/rosa@v0.0.1b/rosa.ts
 # You may need to add the binary directory to your PATH variable to make it runnable everywhere, or add it to your .bashrc file
 > export PATH="/home/$USER/.deno/bin:$PATH"
 ```
