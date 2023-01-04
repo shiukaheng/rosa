@@ -6,7 +6,7 @@ REQUIREMENT: Make sure you have `deno` installed on your system ([instructions](
 deno install --allow-sys --allow-env --allow-run --allow-read --allow-write --unstable -f https://deno.land/x/rosa@v0.0.1d/rosa.ts
 # Add deno bin to .bashrc if it doesn't exist (tested on ubuntu)
 LINE='export PATH="/home/$USER/.deno/bin:$PATH"'
-FILE='$HOME/.bashrc'
+FILE="${HOME}/.bashrc"
 grep -qF -- "$LINE" "$FILE" || echo "$LINE" >> "$FILE"
 ```
 ## 👨‍💻 Sample usage
