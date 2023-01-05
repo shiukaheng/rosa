@@ -8,6 +8,7 @@ import RosaConfig, { Config, getConfig } from "./config.ts";
 import { resolve, join } from "https://deno.land/std/path/mod.ts";
 import { runCommands } from "./shell.ts";
 import { Licenses } from "./constants.ts";
+import { brightMagenta } from "https://deno.land/std@0.167.0/fmt/colors.ts";
 
 /**
  * Builds all packages in the workspace
@@ -15,15 +16,14 @@ import { Licenses } from "./constants.ts";
  * @param args Additional arguments to pass to colcon
  * @returns The status of the build process
  */
-export async function build_packages(cwd: string, args: string[]=[]) {
+export function build_packages(cwd: string, args: string[]=[]) {
     // To be extended with a package list
     // For now, just build all packages in the workspace
     const process = Deno.run({
         cmd: ["colcon", "build", ...args],
         cwd: cwd
     });
-    const status = await process.status();
-    return status;
+    return process
 }
 
 /**
@@ -33,15 +33,14 @@ export async function build_packages(cwd: string, args: string[]=[]) {
  * @param args Additional arguments to pass to colcon
  * @returns The status of the build process
  */
-export async function build_package(cwd: string, package_name: string, args: string[]=[]) {
+export function build_package(cwd: string, package_name: string, args: string[]=[]) {
     // To be extended with a package list
     // For now, just build all packages in the workspace
     const process = Deno.run({
         cmd: ["colcon", "build", "--packages-select", package_name, ...args],
         cwd: cwd
     });
-    const status = await process.status();
-    return status;
+    return process
 }
 
 /**
@@ -50,20 +49,38 @@ export async function build_package(cwd: string, package_name: string, args: str
  */
 export async function createWatcherBuilder(): Promise<Watcher> {
     // TODO: require path
+    console.warn(brightMagenta("WARNING: This feature is experimental and may not work as expected."))
+    // TODO: Kill the previous process if it is still running
     // Start watcher
     const ws_dir = await requireWorkspace();
     const watcher = new Watcher(ws_dir);
+    // let last_builder: null | Deno.Process = null;
+    const last_builder_map = new Map<string, Deno.Process>();
     watcher.addEventListener("package_modified_debounced", (e)=>{
         // @ts-ignore - events.detail is not typed
         const pkg = e.detail as Package;
         console.log(`Package modified: ${pkg.toStringColor()}, rebuilding...`);
-        build_package(ws_dir, pkg.name).then((status)=>{
+        if (last_builder_map.has(pkg.name)) {
+            try {
+                last_builder_map.get(pkg.name)!.kill("SIGINT")
+            } catch (e) {
+                // Do nothing, this means the process has already exited
+            }
+        }
+        const last_builder = build_package(ws_dir, pkg.name)
+        last_builder_map.set(pkg.name, last_builder);
+        last_builder.status().then((status)=>{
             if (status.success) {
                 console.log(`✅ Build successful for ${pkg.toStringColor()}`);
             } else {
-                console.log(`❌ Build failed for ${pkg.toStringColor()}`);
+                if (status.code === 2) {
+                    // Do nothing, this means it has been aborted by rosa
+                } else {
+                    console.log(`❌ Build failed for ${pkg.toStringColor()}`);
+                }
             }
         });
+        
     })
     return watcher;
 }
@@ -77,16 +94,29 @@ export async function createPackageWatcherBuilder(package_name: string, buildOpt
     // Start watcher
     const ws_dir = await requireWorkspace();
     const watcher = new Watcher(ws_dir);
+    let last_builder: null | Deno.Process = null;
     watcher.addEventListener("package_modified_debounced", (e)=>{
         // @ts-ignore - events.detail is not typed
         const pkg = e.detail as Package;
         if (pkg.name === package_name) {
             console.log(`Package modified: ${pkg.toStringColor()}, rebuilding...`);
-            build_package(ws_dir, pkg.name, buildOptions).then((status)=>{
+            if (last_builder) {
+                try {
+                    last_builder.kill("SIGINT")
+                } catch (e) {
+                    // Do nothing, this means the process has already exited
+                }
+            }
+            last_builder = build_package(ws_dir, pkg.name, buildOptions)
+            last_builder.status().then((status)=>{
                 if (status.success) {
                     console.log(`✅ Build successful for ${pkg.toStringColor()}`);
                 } else {
-                    console.log(`❌ Build failed for ${pkg.toStringColor()}`);
+                    if (status.code === 2) {
+                        // Do nothing, this means it has been aborted by rosa
+                    } else {
+                        console.log(`❌ Build failed for ${pkg.toStringColor()}`);
+                    }
                 }
             });
         }
@@ -141,6 +171,7 @@ export async function initWorkspace(dir: string): Promise<void> {
 
 // Thoughts: Maybe convention should be that we assume the wsDir is resolved already..?
 export async function initPackage(wsDir: string, config: Config) {
+    // TODO: Special case for initializing in a potential package directory
     wsDir = Deno.realPathSync(wsDir); // Fix path
     const pkgConfig = await prompt([{
         type: Input,

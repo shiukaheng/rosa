@@ -14,23 +14,32 @@ grep -qF -- "$LINE" "$FILE" || echo "$LINE" >> "$FILE"
 ## 👨‍💻 Sample usage
 > ℹ️ NOTE: Make sure your current working directory is inside of a ROS2 workspace (could be any sub-directory of the workspace). During first use of any `rosa` commands in a new workspace, it prompts for user configuration (mainly choosing which ROS2 installation to use).
 
-### Setting up terminal environment to use `ros2` CLI
+### Creating a new package
 <details>
   <summary>Click to show original steps...</summary>
   
   ```bash
+  # Open a new terminal
   source /opt/ros/<distribution>/setup.sh
-  source ../../install/setup.sh
-  ros2
+  cd ../../ # (cd'ing to workspace root)
+  ros2 pkg create --build-type ament_cmake <package name>
   ```
 </details>
+  
+  ```bash
+  # Run this from any existing terminal inside the workspace
+  rosa init-pkg
+  # ? Enter the name of the package › new_package
+  # ? Enter the description of the package › A sample package
+  # ? Select the build type › ament_python
+  # ? Create empty node? (y/n) › Yes
+  # ? Enter the name of the node › new_node
+  # ? Select a license? (y/n) › Yes
+  # ? Select a license › MIT
+  # ...
+  ```
 
-```bash
-rosa wsh # or alternatively, rosa workspace-shell
-ros2
-```
-
-### Building a package
+### Building the current package
 <details>
   <summary>Click to show original steps...</summary>
   
@@ -43,15 +52,31 @@ ros2
 </details>
 
 ```bash
-# Run this from any existing terminal inside the package
 rosa build # Automatically builds the package folder you are in
 ```
-
-### Watching and automatically building packages in workspace (experimental)
+Or, if you want to automatically build the package upon file changes:
 ```bash
-# Run this as long as you are inside a workspace
-rosa watch-all # Maps all packages within workspace, and if there are any files changes, the package is rebuilt.
+rosa watch
 ```
+
+### Setting up terminal environment to use `ros2` CLI
+<details>
+  <summary>Click to show original steps...</summary>
+  
+  ```bash
+  source /opt/ros/<distribution>/setup.sh
+  source ../../install/setup.sh
+  ros2
+  ```
+</details>
+
+```bash
+rosa wsh # wsh = workspace shell
+ros2
+```
+
+For more information, run `rosa --help` or `rosa <command> --help`
+
 ## Todo
 ### General
 - [ ] Compatibility with more shell environments (currently only bash is supported)

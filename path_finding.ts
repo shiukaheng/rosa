@@ -1,6 +1,6 @@
 // Functions for finding ROS2 workspaces and packages
 
-import { resolve, join } from "https://deno.land/std/path/mod.ts";
+import { resolve, join, parse } from "https://deno.land/std/path/mod.ts";
 import * as parser from "npm:@rgrove/parse-xml@4.0.1"; // Need to use alternative way to import this
 import { Package } from "./package.ts";
 import { brightRed } from "https://deno.land/std@0.167.0/fmt/colors.ts";
@@ -183,3 +183,27 @@ export async function getConfigPath(configName: string = "rosa.config"): Promise
   }
   return config_path;
 }
+
+// /**
+//  * Check if path is a potential package directory
+//  * (i.e., we are within <workspace>/src/<some_package>) but it is not required that it passes assert_package)
+//  * @param cd The directory to start searching from
+//  * @return package path if we are in a potential package directory, null otherwise
+//  */
+// export async function is_potential_package(cd: string): Promise<string | null> {
+//   const ws_dir = await find_workspace(cd, Infinity);
+//   if(ws_dir === null) {
+//     return null;
+//   }
+//   const ws_src_dir = join(ws_dir, "src");
+//   // See if cd is a subdirectory of <workspace>/src
+//   const parsed_cd = parse(cd);
+//   if (parsed_cd.dir === ws_src_dir) {
+//     return cd;
+//   }
+//   const src_dir = join(ws_dir, "src");
+//   if(cd.startsWith(src_dir)) {
+//     return cd;
+//   }
+//   return null;
+// }

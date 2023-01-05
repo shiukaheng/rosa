@@ -135,7 +135,7 @@ async function main() {
 
     program
         .command("init-pkg")
-        .description("Initializes a new package in the current workspace")
+        .description("Runs an interactive wizard to initialize a new package in the current workspace")
         .action(async () => {
             const ws_dir = await requireWorkspace();
             const config = await getConfig();

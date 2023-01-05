@@ -171,7 +171,7 @@ export class Watcher extends EventTarget {
         const ws = await requireWorkspace();
         let status;
         try {
-        status = await build_packages(ws);
+        status = await build_packages(ws).status();
         }
         catch(e) {
         throw new Error(`Colcon not found. Please install colcon and try again.`);
