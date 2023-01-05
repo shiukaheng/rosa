@@ -5,7 +5,7 @@
 ## 📦 Installation
 REQUIREMENT: Make sure you have `deno` installed on your system ([instructions](https://deno.land/manual/getting_started/installation))
 ```bash
-deno install --allow-sys --allow-env --allow-run --allow-read --allow-write --unstable -f https://deno.land/x/rosa@v0.0.1e/rosa.ts
+deno install --allow-sys --allow-env --allow-run --allow-read --allow-write --unstable -f https://deno.land/x/rosa@v0.0.2/rosa.ts
 # Add deno bin to .bashrc if it doesn't exist (tested on ubuntu)
 LINE='export PATH="/home/$USER/.deno/bin:$PATH"'
 FILE="${HOME}/.bashrc"
