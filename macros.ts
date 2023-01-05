@@ -159,9 +159,9 @@ export async function initWorkspace(dir: string): Promise<void> {
         stderr: "null"
     });
     const status = await process.status();
-    if (!status.success) {
-        throw new Error(`Failed to initialize workspace with colcon: ${status.code}`);
-    }
+    // if (!status.success) { # Colcon failing build will still create the workspace
+    //     throw new Error(`Failed to initialize workspace with colcon: ${status.code}`);
+    // }
     // Make src directory
     await Deno.mkdir(join(dir, "src"), {recursive: true});
     // Run config
