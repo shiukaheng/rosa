@@ -1,6 +1,6 @@
 // Main entry point for the CLI
 
-import { Command } from "https://deno.land/x/cliffy@v0.25.6/command/mod.ts";
+import { Command, CompletionsCommand } from "https://deno.land/x/cliffy@v0.25.6/command/mod.ts";
 import { build_package, build_packages, createPackageWatcherBuilder, createWatcherBuilder, initPackage, initWorkspace } from "./macros.ts"
 import { find_package_from_cd, find_workspace_from_cd } from "./path_finding.ts";
 import { bashPreprocessPath, InteractiveShell, runCommands } from "./shell.ts";
@@ -28,6 +28,11 @@ async function main() {
         .help({
             colors: false
         })
+
+    // Add completions command for shell completion
+    program
+        .command("completions", new CompletionsCommand())
+        .hidden()
 
     // From this point on, require a workspace to be present
     program

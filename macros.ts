@@ -3,9 +3,9 @@
 import { requireWorkspace } from "./rosa.ts";
 import { Package } from "./package.ts";
 import { Watcher } from "./watcher.ts";
-import { Confirm, prompt, Select, Input, Number, Checkbox } from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
-import RosaConfig, { Config, getConfig } from "./config.ts";
-import { resolve, join } from "https://deno.land/std/path/mod.ts";
+import { Confirm, prompt, Select, Input } from "https://deno.land/x/cliffy@v0.25.6/prompt/mod.ts";
+import { Config, getConfig } from "./config.ts";
+import { join } from "https://deno.land/std/path/mod.ts";
 import { runCommands } from "./shell.ts";
 import { Licenses } from "./constants.ts";
 import { brightMagenta } from "https://deno.land/std@0.167.0/fmt/colors.ts";
@@ -239,6 +239,7 @@ export async function initPackage(wsDir: string, config: Config) {
             }
         }])).license;
     }
+    
     // Run ros2 pkg create
     const cmd = ["ros2", "pkg", "create", pkgConfig.name as string, "--build-type", pkgConfig.buildType as string, "--description", pkgConfig.description as string,
         ...(createEmptyNode.confirm ? ["--node-name", (nodeConfig?.name as string)] : []),
