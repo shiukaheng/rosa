@@ -1,17 +1,16 @@
 // Main entry point for the CLI
 
 import { Command } from "https://deno.land/x/cliffy@v0.25.6/command/mod.ts";
-import { build_package, build_packages, createPackageWatcherBuilder, createWatcherBuilder } from "./macros.ts"
-import { find_package_from_cd, find_workspace_from_cd, getConfigPath } from "./path_finding.ts";
-import { bashPreprocessPath, InteractiveShell } from "./shell.ts";
+import { build_package, build_packages, createPackageWatcherBuilder, createWatcherBuilder, initPackage, initWorkspace } from "./macros.ts"
+import { find_package_from_cd, find_workspace_from_cd } from "./path_finding.ts";
+import { bashPreprocessPath, InteractiveShell, runCommands } from "./shell.ts";
 import {bold, brightWhite, brightMagenta, brightCyan, brightRed} from "https://deno.land/std@0.167.0/fmt/colors.ts";
-import RosaConfig, { defaultConfig, getConfig } from "./config.ts";
+import { getConfig } from "./config.ts";
+import { resolve, join, sep, parse } from "https://deno.land/std/path/mod.ts";
 
 // Get workspace and package directories
 const ws_dir = await find_workspace_from_cd();
 const pkg_info = await find_package_from_cd();
-
-// CLI
 
 const program = new Command();
 
@@ -39,7 +38,7 @@ async function main() {
             const ws_dir = requireWorkspace();
             const config = await getConfig();
             const ws_name = ws_dir.split("/").slice(-1)[0];
-            const ros2_distro = config.ros2Path.split("/").slice(-2)[0];
+            const ros2_distro = parse(config.ros2Path).base
             // Create PS1
             const ps1 = `${brightCyan( ros2_distro)}:${brightMagenta(ws_name)}$ `;   
             // Launch shell
@@ -91,22 +90,32 @@ async function main() {
         .command("build")
         .alias("b")
         .description("Builds the current package")
-        .action(async () => {
+        .option("--symlink-install", "Use symlink install instead of copying")
+        .option("--continue-on-error", "Continue building even if a package fails")
+        .action(async (options) => {
             const ws_dir = await requireWorkspace();
             const pkg_info = await requirePackage();
             console.log(`Building ${pkg_info.toStringColor()}...`);
-            await build_package(ws_dir, pkg_info.name);
+            await build_package(ws_dir, pkg_info.name, [
+                ...(options.symlinkInstall ? ["--symlink-install"] : []),
+                ...(options.continueOnError ? ["--continue-on-error"] : []),
+            ]);
         })
 
     program
         .command("watch")
         .alias("w")
         .description("Watches the current package")
-        .action(async () => {
+        .option("--symlink-install", "Use symlink install instead of copying")
+        .option("--continue-on-error", "Continue building even if a package fails")
+        .action(async (options) => {
             const _ws_dir = await requireWorkspace();
             const pkg_info = await requirePackage();
             console.log(`Watching ${pkg_info.toStringColor()}...`);
-            const _watcher = createPackageWatcherBuilder(pkg_info.name);
+            const _watcher = createPackageWatcherBuilder(pkg_info.name, [
+                ...(options.symlinkInstall ? ["--symlink-install"] : []),
+                ...(options.continueOnError ? ["--continue-on-error"] : []),
+            ]);
         })
     
     // program
@@ -116,7 +125,23 @@ async function main() {
     //         const ws_dir = await requireWorkspace();
     //         const config = await getConfig();
     //     })
-        
+
+    program
+        .command("init-ws")
+        .description("Initializes a new workspace from the current directory")
+        .action(async () => {
+            await initWorkspace(".")
+        })
+
+    program
+        .command("init-pkg")
+        .description("Initializes a new package in the current workspace")
+        .action(async () => {
+            const ws_dir = await requireWorkspace();
+            const config = await getConfig();
+            await initPackage(ws_dir, config);
+        })
+
     program.parse(Deno.args);
 }
 

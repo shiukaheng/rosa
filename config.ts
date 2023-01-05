@@ -66,12 +66,11 @@ export default class RosaConfig implements Config {
      * Called when config file is invalid
      */
     async promptConfig() {
-        console.log(`Your config file is invalid. Would you like to create a new one? (y/n)`);
         const result = await prompt({
             // @ts-ignore - cliffy types are wrong?
             type: Confirm,
             name: "confirm",
-            message: "Create new config file?",
+            message: "Your config file is invalid. Would you like to create a new one?",
             initial: true,
         });
         if (result.confirm) {
