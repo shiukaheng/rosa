@@ -19,7 +19,7 @@ async function main() {
     // CLI main entry point
     program
         .name("rosa")
-        .version("0.0.1")
+        .version("0.0.2")
         .description(bold(brightWhite(`🌹 ROS2 Automation Macros`)))
         .arguments("[command:string]")
         .action(() => {
