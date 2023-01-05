@@ -54,9 +54,8 @@ async function main() {
         .alias("sh")
         .description("Opens a shell with just ROS sourced (for use with colcon)")
         .action(async () => {
-            const _ws_dir = requireWorkspace();
             const config = await getConfig();
-            const ros2_distro = config.ros2Path.split("/").slice(-2)[0];
+            const ros2_distro = parse(config.ros2Path).base
             const ps1 = `${brightCyan(ros2_distro)}$ `;
             const shell = new InteractiveShell({ps1, initCommands: [
                 `source ${bashPreprocessPath(config.ros2Path)}/setup.bash`,
