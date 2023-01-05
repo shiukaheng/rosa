@@ -1,5 +1,5 @@
 # 🌹 `rosa` — ROS2 Automation Macros
-> ⚠️ Warning: Still under active development
+> ⚠️ WARNING: Still under active development
 
 `rosa` is a thin wrapper on ROS2 tools to streamline common ROS2 development tasks. It automatically sources the correct files, and provides a file watcher to automatiaclly build packages upon file changes.
 ## 📦 Installation
@@ -12,7 +12,7 @@ FILE="${HOME}/.bashrc"
 grep -qF -- "$LINE" "$FILE" || echo "$LINE" >> "$FILE"
 ```
 ## 👨‍💻 Sample usage
-> NOTE: Make sure your current working directory is inside of a ROS2 workspace (could be any sub-directory of the workspace). During first use of any `rosa` commands in a new workspace, it prompts for user configuration (mainly choosing which ROS2 installation to use).
+> ℹ️ NOTE: Make sure your current working directory is inside of a ROS2 workspace (could be any sub-directory of the workspace). During first use of any `rosa` commands in a new workspace, it prompts for user configuration (mainly choosing which ROS2 installation to use).
 
 ### Setting up terminal environment to use `ros2` CLI
 <details>
