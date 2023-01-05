@@ -206,7 +206,14 @@ export async function initPackage(wsDir: string, config: Config) {
         nodeConfig = await prompt([{
             type: Input,
             name: "name",
-            message: "Enter the name of the node"
+            message: "Enter the name of the node",
+            validate: (value: string)=>{
+                // At least can't be empty
+                if (value.length > 0) {
+                    return true;
+                }
+                return "Node name cannot be empty";
+            }
         }]);
     }
     // Optional license
